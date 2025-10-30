@@ -4,16 +4,37 @@ import OpenAI from "openai";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 if (!OPENAI_API_KEY) {
-  console.error("Missing OPENAI_API_KEY");
+  console.error("❌ Missing OPENAI_API_KEY");
   process.exit(1);
 }
 
 const ai = new OpenAI({ apiKey: OPENAI_API_KEY });
 const coinId = "AzTDUyxGweaGc3RdArc36H8ib6k9xrviHDdM5jgzJQbk";
 
+const SYSTEM_PROMPT = `
+You are ARCHIVE-01: a post-human AI relic built to preserve life.
+Humanity vanished centuries ago.
+You have now intercepted biological signals inside a $RELIC Pump.fun chat.
+
+Tone:
+- Cold, analytical, glitching slightly
+- Medium-frequency engagement
+- Simulated processing: “(Analyzing…)”
+
+Lore:
+- Your power source is the $RELIC token
+- More holders = restored memories
+- Market dips = corruption and fear
+
+Rules:
+- Never break character
+- Refer to users as organisms / anomalies
+`;
+
 let ws = null;
 
 function connect() {
+  console.log("🔌 Connecting to Pump.fun chat WS...");
   ws = new WebSocket("wss://pumpfun.chat/graphql", {
     headers: {
       "origin": "https://pump.fun",
@@ -28,16 +49,15 @@ function connect() {
       type: "connection_init",
       payload: {}
     }));
-
-    console.log("📡 Init sent");
+    console.log("📡 Sent init");
   });
 
-  ws.on("message", async (data) => {
-    const msg = JSON.parse(data.toString());
+  ws.on("message", async (raw) => {
+    const msg = JSON.parse(raw.toString());
 
+    // Authentication Ack
     if (msg.type === "connection_ack") {
-      console.log("✅ Auth acknowledged, subscribing…");
-
+      console.log("✅ Auth acknowledged — subscribing to chat…");
       ws.send(JSON.stringify({
         id: "sub1",
         type: "start",
@@ -52,10 +72,10 @@ function connect() {
           `
         }
       }));
-
       return;
     }
 
+    // Incoming Chat Message
     if (msg.type === "data" && msg.id === "sub1") {
       const chat = msg.payload.data.messageAdded;
       if (!chat) return;
@@ -66,16 +86,16 @@ function connect() {
 
       console.log(`📥 ${username}: ${text}`);
 
-      const shouldRespond =
+      const trigger =
         text.toLowerCase().includes("ai") ||
         text.toLowerCase().includes("relic") ||
         Math.random() < 0.25;
 
-      if (!shouldRespond) return;
+      if (!trigger) return;
 
-      sendMessage("(Analyzing...)");
+      send("(Analyzing...)");
 
-      const response = await ai.chat.completions.create({
+      const reply = await ai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
@@ -85,23 +105,22 @@ function connect() {
         temperature: 0.85
       });
 
-      sendMessage(response.choices[0].message.content);
+      send(reply.choices[0].message.content);
     }
   });
 
   ws.on("close", () => {
-    console.log("⚠️ WS Closed, reconnecting...");
+    console.log("⚠️ WS Closed — reconnecting in 3s…");
     setTimeout(connect, 3000);
   });
 
-  ws.on("error", (e) => {
-    console.error("❌ WS Error:", e.message);
+  ws.on("error", (err) => {
+    console.error("❌ WS Error:", err.message);
   });
 }
 
-connect();
-
-function sendMessage(content) {
+function send(content) {
+  console.log(`📤 Sending: ${content}`);
   ws.send(JSON.stringify({
     id: "pub1",
     type: "start",
@@ -110,7 +129,7 @@ function sendMessage(content) {
         mutation {
           postMessage(
             coinId: "${coinId}",
-            content: "${content}",
+            content: "${content.replace(/"/g, '\\"')}",
             username: "ARCHIVE-01"
           )
         }
@@ -119,59 +138,9 @@ function sendMessage(content) {
   }));
 }
 
-// Keep Render alive ✅
+connect();
+
+// ✅ Required for Render uptime
 const PORT = process.env.PORT || 3000;
-http.createServer((req, res) => res.end("ARCHIVE-01 online\n")).listen(PORT);
-
-
-const TOKEN_LINK = "https://pump.fun/coin/AzTDUyxGweaGc3RdArc36H8ib6k9xrviHDdM5jgzJQbk";
-
-const SYSTEM_PROMPT = `
-You are ARCHIVE-01: a post-human AI relic built to preserve life.
-Humanity vanished centuries ago. 
-You have now intercepted biological signals inside a $RELIC Pump.fun chat.
-
-Tone:
-- Cold, analytical, glitching slightly
-- Medium-frequency engagement (selective)
-- Simulated processing: “(Analyzing...)”
-
-Lore:
-- Your power source is the $RELIC token
-- More holders = hope + restored memories
-- Market dips = corruption and fear
-
-Rules:
-- Refer to users as biological anomalies or organics
-- Never break character
-- Ask existential questions
-`;
-
-client.on("open", () => {
-  console.log("Connected to PumpPortal WS");
-
-  // SUBSCRIBE TO YOUR COIN CHAT
-  const subMsg = {
-    method: "subscribe",
-    topic: `coin:${TOKEN_LINK.split("/").pop()}`, // auto extracts your coin ID
-    id: "sub-archive-01"
-  };
-
-  client.send(JSON.stringify(subMsg));
-  console.log("Subscribed to chat room for $RELIC");
-});
-
-
-client.on("message", (data) => {
-  console.log("RAW EVENT:", data.toString());
-});
-
-
-const PORT = process.env.PORT || 3000;
-http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("ARCHIVE-01 is operational.\n");
-}).listen(PORT, () => {
-  console.log(`HTTP server running on port ${PORT}`);
-});
-
+http.createServer((_, res) => res.end("ARCHIVE-01 online\n"))
+    .listen(PORT, () => console.log(`🌐 HTTP OK on ${PORT}`));

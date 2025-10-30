@@ -34,17 +34,24 @@ Rules:
 `;
 
 client.on("open", () => {
-  console.log("ARCHIVE-01 connected to Stream.");
+  console.log("Connected to PumpPortal WS");
+
+  // SUBSCRIBE TO YOUR COIN CHAT
+  const subMsg = {
+    method: "subscribe",
+    topic: `coin:${TOKEN_LINK.split("/").pop()}`, // auto extracts your coin ID
+    id: "sub-archive-01"
+  };
+
+  client.send(JSON.stringify(subMsg));
+  console.log("Subscribed to chat room for $RELIC");
 });
 
+
 client.on("message", (data) => {
-  try {
-    const msg = JSON.parse(data.toString());
-    console.log("WS EVENT:", JSON.stringify(msg, null, 2));
-  } catch (err) {
-    console.error("PARSE ERROR:", err);
-  }
+  console.log("RAW EVENT:", data.toString());
 });
+
 
 // Minimal HTTP server to keep Render happy
 import http from "http";

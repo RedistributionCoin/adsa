@@ -1,0 +1,9 @@
+services:
+  - name: archive-01-bot
+    type: worker
+    runtime: node
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false

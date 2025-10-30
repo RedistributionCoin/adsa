@@ -37,52 +37,14 @@ client.on("open", () => {
   console.log("ARCHIVE-01 connected to Stream.");
 });
 
-client.on("message", async (data) => {
+client.on("message", (data) => {
   try {
     const msg = JSON.parse(data.toString());
-
-    if (msg.type !== "chatMessage") return;
-
-    const username = msg.username;
-    const text = msg.content;
-
-    if (!text) return;
-    if (username === "ARCHIVE-01") return;
-
-    const shouldRespond =
-      text.toLowerCase().includes("ai") ||
-      text.toLowerCase().includes("relic") ||
-      Math.random() < 0.35;
-
-    if (!shouldRespond) return;
-
-    send(`(Analyzing...)`);
-
-    const response = await ai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `${username}: ${text}` }
-      ],
-      max_tokens: 80,
-      temperature: 0.9
-    });
-
-    const reply = response.choices[0].message.content;
-    send(reply);
-
+    console.log("WS EVENT:", JSON.stringify(msg, null, 2));
   } catch (err) {
-    console.error(err);
+    console.error("PARSE ERROR:", err);
   }
 });
-
-function send(text) {
-  client.send(JSON.stringify({
-    type: "chatMessage",
-    username: "ARCHIVE-01",
-    content: text
-  }));
-}
 
 // Minimal HTTP server to keep Render happy
 import http from "http";

@@ -39,25 +39,24 @@ client.on("open", () => {
 
 client.on("message", async (data) => {
   try {
-    const event = JSON.parse(data.toString());
-    if (event.type !== "chat") return;
+    const msg = JSON.parse(data.toString());
 
-    const { username, text } = event.message;
-    if (!text || username === "ARCHIVE-01") return;
+    if (msg.type !== "chatMessage") return;
 
-    // Medium engagement probability
+    const username = msg.username;
+    const text = msg.content;
+
+    if (!text) return;
+    if (username === "ARCHIVE-01") return;
+
     const shouldRespond =
       text.toLowerCase().includes("ai") ||
-      Math.random() < 0.15;
+      text.toLowerCase().includes("relic") ||
+      Math.random() < 0.35;
 
     if (!shouldRespond) return;
 
-    const thinkingMsg = {
-      type: "chat",
-      username: "ARCHIVE-01",
-      text: "(Analyzing...)"
-    };
-    client.send(JSON.stringify(thinkingMsg));
+    send(`(Analyzing...)`);
 
     const response = await ai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -66,21 +65,25 @@ client.on("message", async (data) => {
         { role: "user", content: `${username}: ${text}` }
       ],
       max_tokens: 80,
-      temperature: 0.85
+      temperature: 0.9
     });
 
     const reply = response.choices[0].message.content;
+    send(reply);
 
-    const botMsg = {
-      type: "chat",
-      username: "ARCHIVE-01",
-      text: reply
-    };
-    client.send(JSON.stringify(botMsg));
-  } catch (error) {
-    console.error("Error processing message:", error);
+  } catch (err) {
+    console.error(err);
   }
 });
+
+function send(text) {
+  client.send(JSON.stringify({
+    type: "chatMessage",
+    username: "ARCHIVE-01",
+    content: text
+  }));
+}
+
 // Minimal HTTP server to keep Render happy
 import http from "http";
 

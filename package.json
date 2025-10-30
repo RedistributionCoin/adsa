@@ -1,0 +1,14 @@
+{
+  "name": "archive-01-bot",
+  "version": "1.0.0",
+  "description": "$RELIC Pump.fun Stream AI Bot",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "openai": "^4.0.0",
+    "ws": "^8.16.0"
+  }
+}

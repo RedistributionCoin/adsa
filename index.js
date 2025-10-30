@@ -167,9 +167,6 @@ client.on("message", (data) => {
 });
 
 
-// Minimal HTTP server to keep Render happy
-import http from "http";
-
 const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": "text/plain" });

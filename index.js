@@ -7,7 +7,7 @@ if (!OPENAI_API_KEY) {
   process.exit(1);
 }
 
-const client = new WebSocket("wss://stream.pump.fun");
+const client = new WebSocket("wss://pumpportal.fun/ws");
 const ai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 const TOKEN_LINK = "https://pump.fun/coin/AzTDUyxGweaGc3RdArc36H8ib6k9xrviHDdM5jgzJQbk";

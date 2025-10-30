@@ -1,4 +1,43 @@
 import WebSocket from "ws";
+
+const ws = new WebSocket("wss://pumpfun.chat/graphql", {
+  headers: {
+    "origin": "https://pump.fun",
+    "sec-websocket-protocol": "graphql-ws"
+  }
+});
+
+ws.on("open", () => {
+  console.log("Connected to Pump.fun chat");
+
+  ws.send(JSON.stringify({
+    type: "connection_init",
+    payload: {}
+  }));
+
+  // Subscribe to the $RELIC chat room
+  ws.send(JSON.stringify({
+    id: "1",
+    type: "start",
+    payload: {
+      query: `
+        subscription {
+          messageAdded(coinId: "AzTDUyxGweaGc3RdArc36H8ib6k9xrviHDdM5jgzJQbk") {
+            username
+            content
+          }
+        }
+      `
+    }
+  }));
+
+  console.log("Subscribed to messageAdded for $RELIC");
+});
+
+ws.on("message", (data) => {
+  console.log("CHAT EVENT:", data.toString());
+});
+
 import OpenAI from "openai";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
